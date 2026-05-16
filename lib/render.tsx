@@ -14,8 +14,28 @@ const STRIP_CLASSES = [
 const WPBAKERY_SHORTCODE_RE =
   /\[\/?(vc_row|vc_column|vc_column_text|vc_row_inner|vc_column_inner|image_with_animation|nectar_btn|fancy_box|divider|nectar_dropcap)[^\]]*\]/g;
 
+/**
+ * Strips repeated "blog." prefixes from hostnames in URLs.
+ *
+ * Background: during the WordPress domain migration on 14 May 2026, an
+ * infinite redirect loop briefly accumulated multiple "blog." prefixes onto
+ * image URLs (e.g., blog.blog.blog.meirecipes.com). Some of these URLs were
+ * saved into post content. This helper normalises them at render time so
+ * images load correctly without needing a database search-and-replace.
+ *
+ * Also normalises legacy www.meirecipes.com → blog.meirecipes.com for any
+ * URLs that reference the old WordPress location.
+ */
+export function repairUrls(input: string): string {
+  if (!input) return input;
+  return input
+    .replace(/(?:blog\.){2,}meirecipes\.com/gi, "blog.meirecipes.com")
+    .replace(/https?:\/\/www\.meirecipes\.com\/wp-content/gi, "https://blog.meirecipes.com/wp-content")
+    .replace(/https?:\/\/meirecipes\.com\/wp-content/gi, "https://blog.meirecipes.com/wp-content");
+}
+
 export function cleanContent(html: string): string {
-  return html.replace(WPBAKERY_SHORTCODE_RE, "");
+  return repairUrls(html.replace(WPBAKERY_SHORTCODE_RE, ""));
 }
 
 export function renderPostContent(html: string, localePrefix: string = ""): React.ReactNode {

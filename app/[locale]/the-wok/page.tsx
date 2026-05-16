@@ -13,7 +13,7 @@ export const revalidate = 3600;
  * (YouTube watch / shorts / youtu.be, or Vimeo). The page detects the URL and
  * renders the video as the centrepiece. Until then, a "video pending" notice shows.
  */
-const VIDEO_URL = process.env.MEI_WOK_VIDEO_URL?.trim() || "";
+const VIDEO_URL = "https://www.youtube.com/watch?v=qEfXirHW1J0";
 
 export async function generateMetadata({ params }: { params: { locale: string } }) {
   if (!isLocale(params.locale)) return {};

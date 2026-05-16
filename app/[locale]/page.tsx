@@ -12,12 +12,16 @@ import {
 import { decodeEntities, stripHtml } from "@/lib/render";
 import { isLocale, Locale } from "@/lib/i18n-config";
 import { BOOK } from "@/lib/book";
-import { MeiMark } from "@/components/MeiMark";
 import { FamilyModeToggle } from "@/components/FamilyModeToggle";
 import { YouTubeLite } from "@/components/YouTubeLite";
 import { notFound } from "next/navigation";
 
 export const revalidate = 600;
+// Photos hosted on the WordPress media library, served via blog.meirecipes.com.
+const FAMILY_KITCHEN_URL =
+  "https://blog.meirecipes.com/wp-content/uploads/2026/05/20200926_211658-scaled.jpg";
+const MOM_URL =
+  "https://blog.meirecipes.com/wp-content/uploads/2026/05/mom.jpg";
 
 export default async function Home({ params: { locale } }: { params: { locale: string } }) {
   if (!isLocale(locale)) notFound();
@@ -274,7 +278,14 @@ export default async function Home({ params: { locale } }: { params: { locale: s
             </div>
           </div>
           <div className="col-span-12 md:col-span-5 flex justify-center">
-            <MeiMark size={180} className="opacity-90" />
+            <Image
+              src={MOM_URL}
+              alt={t("home.familyKitchen.kicker")}
+              width={1200}
+              height={900}
+              className="w-full h-auto object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
           </div>
         </div>
       </section>
@@ -286,11 +297,12 @@ export default async function Home({ params: { locale } }: { params: { locale: s
         <div className="grid grid-cols-12 gap-8 items-center">
           <div className="col-span-12 md:col-span-4 flex justify-center">
             <Image
-              src="/mei-blossom.png"
-              alt="梅 — Mei blossom logo"
-              width={400}
-              height={520}
-              className="w-full max-w-[280px] h-auto"
+              src={FAMILY_KITCHEN_URL}
+              alt={t("home.creds.title")}
+              width={1200}
+              height={900}
+              className="w-full h-auto object-cover"
+              sizes="(max-width: 768px) 100vw, 33vw"
             />
           </div>
           <div className="col-span-12 md:col-span-8">

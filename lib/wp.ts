@@ -16,11 +16,22 @@ import {
 } from "./wp-types";
 import type { Locale } from "./i18n-config";
 import { BOOK } from "./book";
+import { repairUrls } from "./render";
 
 const BASE = (process.env.WORDPRESS_URL ?? "https://blog.meirecipes.com").replace(/\/$/, "");
 const REVALIDATE = Number(process.env.WP_REVALIDATE_SECONDS ?? "600");
 
 type FetchOpts = { revalidate?: number; tags?: string[] };
+
+/**
+ * Parses WordPress JSON and repairs any malformed URLs as a side effect.
+ * Catches multiple-blog-prefix and legacy www. URLs in every field.
+ */
+async function parseAndRepair<T>(res: Response): Promise<T> {
+  const raw = await res.text();
+  const repaired = repairUrls(raw);
+  return JSON.parse(repaired) as T;
+}
 
 async function wpFetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
   const url = path.startsWith("http") ? path : `${BASE}${path}`;
@@ -29,7 +40,7 @@ async function wpFetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
     headers: { Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`WP fetch ${res.status} for ${url}`);
-  return (await res.json()) as T;
+  return parseAndRepair<T>(res);
 }
 
 async function wpFetchPaged<T>(path: string, opts: FetchOpts = {}): Promise<T[]> {
@@ -41,7 +52,7 @@ async function wpFetchPaged<T>(path: string, opts: FetchOpts = {}): Promise<T[]>
   });
   if (!res.ok) throw new Error(`WP fetch ${res.status} for ${url}`);
   const total = Number(res.headers.get("X-WP-TotalPages") ?? "1");
-  const data = (await res.json()) as T[];
+  const data = await parseAndRepair<T[]>(res);
   if (total <= 1) return data;
   const rest = await Promise.all(
     Array.from({ length: total - 1 }, (_, i) => i + 2).map(async (page) => {
@@ -51,7 +62,7 @@ async function wpFetchPaged<T>(path: string, opts: FetchOpts = {}): Promise<T[]>
         headers: { Accept: "application/json" },
       });
       if (!r.ok) throw new Error(`WP fetch ${r.status} for ${u}`);
-      return (await r.json()) as T[];
+      return parseAndRepair<T[]>(r);
     })
   );
   return [...data, ...rest.flat()];
@@ -194,7 +205,7 @@ export async function getPosts(args: {
     headers: { Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`WP fetch ${res.status} for ${url}`);
-  const posts = (await res.json()) as WPPost[];
+  const posts = await parseAndRepair<WPPost[]>(res);
   return {
     posts,
     totalPages: Number(res.headers.get("X-WP-TotalPages") ?? "1"),
@@ -236,7 +247,7 @@ export async function getCategoryHeroImage(slug: string): Promise<{
       headers: { Accept: "application/json" },
     });
     if (!res.ok) return null;
-    const posts = (await res.json()) as WPPost[];
+    const posts = await parseAndRepair<WPPost[]>(res);
     for (const p of posts) {
       const media = p._embedded?.["wp:featuredmedia"]?.[0];
       if (media?.source_url) {
@@ -281,7 +292,7 @@ export async function getSignaturePosts(): Promise<WPPost[]> {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) return [];
-    const posts = (await res.json()) as WPPost[];
+    const posts = await parseAndRepair<WPPost[]>(res);
     // Honour signature_order meta when set; otherwise leave reverse-chronological.
     return posts.sort((a, b) => {
       const oa = signatureOrder(a);
@@ -318,7 +329,7 @@ export async function getBookRecipes(perPage = 24): Promise<WPPost[]> {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) return [];
-    return (await res.json()) as WPPost[];
+    return parseAndRepair<WPPost[]>(res);
   } catch {
     return [];
   }
