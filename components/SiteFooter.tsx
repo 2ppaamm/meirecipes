@@ -15,6 +15,16 @@ export function SiteFooter() {
         <div className="col-span-12 sm:col-span-6 space-y-3 text-sm text-plum/70">
           <p className="font-display italic text-rose-deep">{t("footer.tag")}</p>
           <p className="text-xs text-plum/55">{t("footer.wok")}</p>
+          <p className="text-xs">
+            <a
+              href="https://instagram.com/mei.recipes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-rose hover:text-rose-deep transition-colors"
+            >
+              {t("footer.instagram")}
+            </a>
+          </p>
         </div>
         <div className="col-span-12 sm:col-span-3 smallcaps text-[10px] text-plum/50 flex flex-col gap-1">
           <span>{t("home.creds.bookSubtitle")}</span>
